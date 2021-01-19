@@ -6,7 +6,8 @@ import Control.Monad (forM_, replicateM_ )
 
 
 
--- DATA TYPES
+-- |DATA TYPES 
+-- |The 'customer' record includes their name, account number, and account balance - some types and typeclasses defined below. 
 data Customer = Customer {
   name :: Name,
   balance :: MVar Balance,
@@ -17,68 +18,47 @@ type Account = Int
 type Balance =  Int
 type Name = String
 type Value = Int
-
+-- |The 'coin' data type is for our random coinflip and includes head and tail.
 data Coin = Head | Tail deriving (Show, Eq)  
 
--- RANDOM GENERATOR FUNCTIONS
+
+-- |RANDOM GENERATOR FUNCTIONS 
+-- |The 'coinflip' function uses Bool to get head or tail.
 coinFlip :: IO Coin
 coinFlip = do
     r <- randomIO :: IO Bool
     return $ if r then Head else Tail
 
+-- |The 'randomCustIndex' function picks a number between 0-9 to map to each one of the customers (0=balance1, 1=balance2 etc - detail outlined in report).
 randomCustIndex :: IO Int 
 randomCustIndex = do
     r <- randomRIO (0, 9)
     return r    
-
+-- |The 'randomAmount' function picks a random amount for each individual transaction between £10 and £50.
 randomAmount :: IO Int 
 randomAmount = do
     r <- randomRIO (10, 50)
     return r    
 
-{-
--- TRANSFER FUNCTION
-transfer :: Customer -> Customer -> Int -> IO (Customer, Customer)
-transfer from to amount
-  | amount <= 0 = return (from, to)
-  | balance from < amount = return (from, to) -- maybe remove this
-  | balance from <= 0  = return (from, to) -- i added this to try to fit r'qs -- a transaction is processed but no money is passed if account balance is 0
-  | name from == name to = return (from, to)  -- i added this to try to fit r'qs -- customers to return even if it's the same account -- though we have caught these cases in main
-  | otherwise = return ((from { balance =  ((balance  from) - amount)}),(to { balance  =  ((balance  to) + amount)}))
--}
 
--- THREAD PROCESS
--- INDEX --
--- C1 balance1 = 0 
--- C2 balance2 = 1
--- C3 balance3 = 2
--- C4 balance4 = 3
--- C5 balance1 = 4
--- C6 balance2 = 5
--- C7 balance3 = 6
--- C8 balance4 = 7
--- C9 balance3 = 8
--- C10 balance4 = 9
-
- 
+-- |THREAD PROCESS
+-- |The 'process' function is our customer thread process. It takes a customer name, a customer data type, an mvar for this customer, an mvar for a value, another mvar for a list of customers in main and 10x MVars for balances - one for each customer.
 process :: Name -> Customer -> MVar Customer -> MVar Value -> MVar Customer -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance ->  MVar Balance -> MVar Balance -> IO () 
 process name customer mvar value customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10 = do
- {- forM_ [1..3] $ \_ -> do -}
     c1 <- coinFlip
     putStrLn $ name ++ "'s turn, they -- got " ++ (show c1)    
-    if c1 == Head then do
+    if c1 == Head then do -- when each thread gets head, they can start their process, otherwise they need to flip until they get head to start.
         putMVar mvar customer
         putMVar customerlist customer
         r1 <- randomAmount
         r2 <- randomCustIndex
         putStrLn $ name ++ " -- got " ++ (show r2) ++ "-- and random amount is -- " ++ (show r1)
         putMVar value r2
-
-        if r2 == 0 then do 
+        if r2 == 0 then do -- random index here is 0, so this = balance1 getting the transfer, which is C1.
             number <- takeMVar balance1
             let newnumber = number + r1
             putMVar balance1 newnumber
-        ----------------------------------- 1 attempt at withdrawals
+        ---------------------------------------- withdrawls for C1. 
             if name == "C2" then do
                 number <- takeMVar balance2
                 let newnumber = number - r1
@@ -119,14 +99,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance1
                 let newnumber = number - r1
                 putMVar balance1 newnumber
-        ----------------------------------- 1 attempt at withdrawals    
+        ----------------------------------- withdrawls for C1.     
 
 
-        else if r2 == 1 then do
+        else if r2 == 1 then do  -- random index here is 1, so this = balance2 getting the transfer, which is C2.
             number <- takeMVar balance2
             let newnumber = number + r1
             putMVar balance2 newnumber
-          --------------------------- 2 attempt at withdrawals
+          ------------------------------   withdrawls for C2.
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -167,14 +147,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance2
                 let newnumber = number - r1
                 putMVar balance2 newnumber       
-        ---------------------------------- 2 attempt at withdrawals  
+        ---------------------------------- withdrawls for C2.
 
 
-        else if r2 == 2 then do
+        else if r2 == 2 then do -- random index here is 2, so this = balance3 getting the transfer, which is C3.
           number <- takeMVar balance3
           let newnumber = number + r1
           putMVar balance3 newnumber 
-        --------------------------- 3 attempt at withdrawals
+        ----------------------------------   withdrawls for C3.
           if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -215,14 +195,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance3
                 let newnumber = number - r1
                 putMVar balance3 newnumber       
-        ---------------------------------- 3 attempt at withdrawals 
+        ---------------------------------- withdrawls for C3. 
 
 
-        else if r2 == 3 then do
+        else if r2 == 3 then do  -- random index here is 3, so this = balance4 getting the transfer, which is C4.
             number <- takeMVar balance4
             let newnumber = number + r1
             putMVar balance4 newnumber    
-        --------------------------- 4 attempt at withdrawals
+        --------------------------- withdrawls for C4.
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -263,12 +243,12 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance4
                 let newnumber = number - r1
                 putMVar balance4 newnumber       
-        ---------------------------------- 5 attempt at withdrawals 
-        else if r2 == 4 then do
+        ---------------------------------- withdrawls for C4.
+        else if r2 == 4 then do -- random index here is 4, so this = balance5 getting the transfer, which is C5.
             number <- takeMVar balance5
             let newnumber = number + r1
             putMVar balance5 newnumber  
-      --------------------------- 5 attempt at withdrawals
+      --------------------------- withdrawls for C5.
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -309,12 +289,12 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance5
                 let newnumber = number - r1
                 putMVar balance5 newnumber    
-        ---------------------------------- 6 attempt at withdrawals
-        else if r2 == 5 then do
+        ---------------------------------- withdrawls for C5.
+        else if r2 == 5 then do -- random index here is 5, so this = balance6 getting the transfer, which is C6.
             number <- takeMVar balance6
             let newnumber = number + r1
             putMVar balance6 newnumber 
-        ---------------------------------- 6 attempt at withdrawals    
+        ---------------------------------- withdrawls for C6.    
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -355,12 +335,12 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance6
                 let newnumber = number - r1
                 putMVar balance6 newnumber
-        ---------------------------------- 7 attempt at withdrawals
-        else if r2 == 6 then do
+        ---------------------------------- withdrawls for C7.  
+        else if r2 == 6 then do -- random index here is 6, so this = balance7 getting the transfer, which is C7.
             number <- takeMVar balance7
             let newnumber = number + r1
             putMVar balance7 newnumber 
-        ---------------------------------- 7 attempt at withdrawals
+        ---------------------------------- withdrawls for C7.
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -401,12 +381,12 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance7
                 let newnumber = number - r1
                 putMVar balance7 newnumber
-        ---------------------------------- 8 attempt at withdrawals
-        else if r2 == 7 then do 
+        ---------------------------------- withdrawls for C8.
+        else if r2 == 7 then do -- random index here is 7, so this = balance8 getting the transfer, which is C8.
             number <- takeMVar balance8
             let newnumber = number + r1
             putMVar balance8 newnumber 
-        ---------------------------------- 8 attempt at withdrawals         
+        ---------------------------------- withdrawls for C8.         
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -447,12 +427,12 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance8
                 let newnumber = number - r1
                 putMVar balance8 newnumber
-        ---------------------------------- 9 attempt at withdrawals
-        else if r2 == 8 then do 
+        ---------------------------------- withdrawls for C9.
+        else if r2 == 8 then do -- random index here is 8, so this = balance9 getting the transfer, which is C9.
             number <- takeMVar balance9
             let newnumber = number + r1
             putMVar balance9 newnumber 
-        ---------------------------------- 9 attempt at withdrawals         
+        ---------------------------------- withdrawls for C9.         
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -493,12 +473,12 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance9
                 let newnumber = number - r1
                 putMVar balance9 newnumber
-         ---------------------------------- 10 attempt at withdrawals
-          else do 
+         ---------------------------------- withdrawls for C10.
+          else do -- random index here that the 'else do' catches is 9, so this = balance10 getting the transfer, which is C10.
             number <- takeMVar balance10
             let newnumber = number + r1
             putMVar balance10 newnumber 
-        ---------------------------------- 10 attempt at withdrawals         
+        ---------------------------------- withdrawls for C10.        
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -540,15 +520,19 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 let newnumber = number - r1
                 putMVar balance10 newnumber
     else do    
-
+ -- | A 'random' thread delay function which creates random timing delays between threads starting 
         randomRIO (1,50) >>= \r -> threadDelay (r * 100000)
         process name customer mvar value customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10
     
     
--- MAIN FUNCTION        
+
+
+-- | MAIN FUNCTION   
+-- |The 'main' function creates 10x customers, spawns 10x threads, runs those threads 10x times (to get 100 transactions completed) 
+-- | The 'main' function also keeps track of a few things: it prints out the order the customers get 'Head' in the coinflip and start the transfer process, the random transfer amounts each customer gets.      
 main :: IO ()
 main = do
-    balance1 <- newMVar 1000
+    balance1 <- newMVar 1000 -- initialise each account balance with £1000
     balance2 <- newMVar 1000
     balance3 <- newMVar 1000
     balance4 <- newMVar 1000
@@ -560,7 +544,7 @@ main = do
     balance10 <- newMVar 1000
 
     putStrLn $ ".******------ WELCOME ------******."   
-    let c1 = Customer {name = "C1", balance = balance1, account = 1}
+    let c1 = Customer {name = "C1", balance = balance1, account = 1} -- create 10x customers
     let c2 = Customer {name = "C2", balance = balance2, account = 2} 
     let c3 = Customer {name = "C3", balance = balance3, account = 3}
     let c4 = Customer {name = "C4", balance = balance4, account = 4} 
@@ -572,12 +556,12 @@ main = do
     let c10 = Customer {name = "C10", balance = balance10, account = 10}
     putStrLn $ ".******------ CUSTOMERS CREATED ------******." 
     
-    ---- ADD 10x transactions here and it works
-    forM_ [1..10] $ \_ -> do
+    -- | The 'forM_' monad runs the threads and the second half of the main function 10x, which gets 100x transfers completed (10 per customer each run).
+    forM_ [1..10] $ \_ -> do   
         
   
     
-    -- MVars for customers
+    -- | Here I create 10x individual MVars for customer data types to be input
        one <- newEmptyMVar
        two <- newEmptyMVar
        three <- newEmptyMVar
@@ -589,7 +573,7 @@ main = do
        nine <- newEmptyMVar
        ten <- newEmptyMVar
     
-    -- MVars for index values
+    -- | Here I create 10x individual MVars for thread index values to be input -- (in lines 654 - 687 these are commented out, as it was WIP to find a more simple way to match customers).
        value1 <- newEmptyMVar
        value2 <- newEmptyMVar
        value3 <- newEmptyMVar
@@ -600,19 +584,21 @@ main = do
        value8 <- newEmptyMVar
        value9 <- newEmptyMVar
        value10 <- newEmptyMVar
-    
+
+    -- | A shared MVar for a list of customer data types.
        customerlist <- newEmptyMVar
-       -- MERGING tests with 'b'
-       
-       putStrLn $ ".******------ EMPTY MVARS CREATED ------******."
+       putStrLn $ ".******------ START - ALL EMPTY MVARS CREATED ------******."
+
+    -- | A 'random' thread delay function which creates random timing delays between threads starting. 
        randomRIO (1,50) >>= \r -> threadDelay (r * 100000)
+    -- | My 'proccess' of 10x customer threads spawned to run the transfers.
        mapM_ forkIO [process "C1" c1 one value1 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C2" c2 two value2 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C3" c3 three value3 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C4" c4 four value4 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C5" c5 five value5 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C6" c6 six value6 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C7" c7 seven value7 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C8" c8 eight value8 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C9" c9 nine value9 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10, process "C10" c10 ten value10 customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10]
        putStrLn $ ".******------ THREADS RUNNING ------******."
 
-    -- haven't used this
+    -- | Puts the customers into a list of MVar [Mvar Customers].
        usecustomers <- newMVar [one, two , three, four, five, six , seven, eight , nine, ten]
 
-    
+    -- | Prints out the first customers to get 'Head' and therefore start the transaction process (also helpful for testing).
        firsthead <- takeMVar customerlist
        let print_name = print . name
        let reveal_first = print_name firsthead
@@ -665,7 +651,9 @@ main = do
        reveal_tenth 
 
 
-   -- INDEX value tests | unblock -- this way we can read each value each customer thread got
+   -- | Prints out the random index value between 0-9 each thread gets (also helpful for testing) - this is in customer order e.g. 1-10. Uncomment for testing.
+    {-    putStrLn $ ".******------ INDEX VALUES ------******."
+      
        rvalue1 <- readMVar value1
        putStrLn $ show rvalue1
 
@@ -694,16 +682,17 @@ main = do
        putStrLn $ show rvalue9
 
        rvalue10 <- readMVar value10
-       putStrLn $ show rvalue10
+       putStrLn $ show rvalue10 
+       
+       -}
+
     
--- || INDEXING FOR TRANSFERS   
+-- || UNFINISHED - INDEXING FOR TRANSFERS  was hoping to use this to create a shorter way to match customers <-> customers for transfers
+
        c <- takeMVar usecustomers -- c :: [MVar Customer]
-    
+{-    
        let index = (c!!rvalue1)
        z <- readMVar index 
-       n <- randomAmount
-       --putStrLn $ "RANDOM AMOUNT: " ++ show n
-       
 
        let index2 = (c!!rvalue2)
        y <- readMVar index2
@@ -731,40 +720,50 @@ main = do
 
        let index10 = (c!!rvalue10)
        v <- readMVar index10
-
+-}
+       putStrLn $ ".******------ || 10x CURRENT ACCOUNT BALANCES BELOW || ------******."
        
-
+       putStrLn $ ".******------ || C1 CURRENT BALANCE || ------******."
        bal1 <- readMVar  balance1
        print bal1
     
+       putStrLn $ ".******------ || C2 CURRENT BALANCE || ------******."    
        bal2 <- readMVar  balance2
        print bal2
-
+ 
+       putStrLn $ ".******------ || C3 CURRENT BALANCE || ------******." 
        bal3 <- readMVar  balance3
        print bal3
 
+       putStrLn $ ".******------ || C4 CURRENT BALANCE || ------******." 
        bal4 <- readMVar balance4
        print bal4
 
+       putStrLn $ ".******------ || C5 CURRENT BALANCE || ------******."
        bal5 <- readMVar  balance5
        print bal5
 
+       putStrLn $ ".******------ || C6 CURRENT BALANCE || ------******."
        bal6 <- readMVar balance6
        print bal6
 
+       putStrLn $ ".******------ || C7 CURRENT BALANCE || ------******."
        bal7 <- readMVar  balance7 
        print bal7
 
+       putStrLn $ ".******------ || C8 CURRENT BALANCE || ------******."
        bal8 <- readMVar balance8
        print bal8
        
+       putStrLn $ ".******------ || C9 CURRENT BALANCE || ------******."
        bal9 <- readMVar  balance9 
        print bal9
 
+       putStrLn $ ".******------ || C10 CURRENT BALANCE || ------******."
        bal10 <- readMVar balance10
        print bal10
 
-       putStrLn $ ".******------ TEST || THREADS ALL RUN - EXIT ------******."
+       putStrLn $ ".******------ || 10x TRANSFERS COMPLETE - END || ------******."
     
     
 
