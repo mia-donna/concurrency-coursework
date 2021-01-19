@@ -6,20 +6,27 @@ import Control.Monad (forM_, replicateM_ )
 
 
 
--- |DATA TYPES 
+-- |DATA TYPES AND TYPECLASSES
 -- |The 'customer' record includes their name, account number, and account balance - some types and typeclasses defined below. 
 data Customer = Customer {
   name :: Name,
   balance :: MVar Balance,
   account :: Account
 } deriving (Eq)
- 
-type Account = Int
-type Balance =  Int
-type Name = String
-type Value = Int
+
 -- |The 'coin' data type is for our random coinflip and includes head and tail.
 data Coin = Head | Tail deriving (Show, Eq)  
+
+
+-- |The 'account' type for managing account numbers. 
+type Account = Int
+-- |The 'balance' type for managing balances and transfers. 
+type Balance =  Int
+-- |The 'name' type for managing customer names. 
+type Name = String
+-- |The 'value' type for managing random index values. 
+type Value = Int
+
 
 
 -- |RANDOM GENERATOR FUNCTIONS 
