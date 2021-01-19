@@ -49,7 +49,7 @@ randomAmount = do
 
 
 -- |THREAD PROCESS
--- |The 'process' function is our customer thread process. It takes a customer name, a customer data type, an mvar for this customer, an mvar for a value, another mvar for a list of customers in main and 10x MVars for balances - one for each customer.
+-- |The 'process' function is our customer thread process. It takes a customer name, a customer data type, an mvar for this customer, an mvar for a random value, another mvar for a list of customers in main and 10x MVars for balances - one for each customer.
 process :: Name -> Customer -> MVar Customer -> MVar Value -> MVar Customer -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance -> MVar Balance ->  MVar Balance -> MVar Balance -> IO () 
 process name customer mvar value customerlist balance1 balance2 balance3 balance4 balance5 balance6 balance7 balance8 balance9 balance10 = do
     c1 <- coinFlip
@@ -103,9 +103,17 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 let newnumber = number - r1
                 putMVar balance10 newnumber        
               else do 
-                number <- takeMVar balance1
+                number <- takeMVar balance1 -- if C1 randomly gets itself, put the random balance back into its own account
                 let newnumber = number - r1
                 putMVar balance1 newnumber
+
+                number <- takeMVar balance1 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance1 newnumber
+
+                number2 <- takeMVar balance2 -- **** then take the random number (in this case 0) + 1 to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance2 newnumber2
         ----------------------------------- withdrawls for C1.     
 
 
@@ -153,7 +161,15 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
               else do 
                 number <- takeMVar balance2
                 let newnumber = number - r1
-                putMVar balance2 newnumber       
+                putMVar balance2 newnumber 
+
+                number <- takeMVar balance2 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance2 newnumber
+
+                number2 <- takeMVar balance3 -- **** then take the random number (in this case 1 + 1 = 2) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance3 newnumber2      
         ---------------------------------- withdrawls for C2.
 
 
@@ -201,7 +217,15 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
             else do 
                 number <- takeMVar balance3
                 let newnumber = number - r1
-                putMVar balance3 newnumber       
+                putMVar balance3 newnumber 
+
+                number <- takeMVar balance3 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance3 newnumber
+
+                number2 <- takeMVar balance4 -- **** then take the random number (in this case 2 + 1 = 3) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance4 newnumber2       
         ---------------------------------- withdrawls for C3. 
 
 
@@ -249,7 +273,15 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
               else do 
                 number <- takeMVar balance4
                 let newnumber = number - r1
-                putMVar balance4 newnumber       
+                putMVar balance4 newnumber 
+
+                number <- takeMVar balance4 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance4 newnumber 
+
+                number2 <- takeMVar balance5 -- **** then take the random number (in this case 3 + 1 = 4) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance5 newnumber2      
         ---------------------------------- withdrawls for C4.
         else if r2 == 4 then do -- random index here is 4, so this = balance5 getting the transfer, which is C5.
             number <- takeMVar balance5
@@ -295,7 +327,15 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
               else do 
                 number <- takeMVar balance5
                 let newnumber = number - r1
-                putMVar balance5 newnumber    
+                putMVar balance5 newnumber  
+
+                number <- takeMVar balance5 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance5 newnumber  
+
+                number2 <- takeMVar balance6 -- **** then take the random number (in this case 4 + 1 = 5) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance6 newnumber2  
         ---------------------------------- withdrawls for C5.
         else if r2 == 5 then do -- random index here is 5, so this = balance6 getting the transfer, which is C6.
             number <- takeMVar balance6
@@ -342,6 +382,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance6
                 let newnumber = number - r1
                 putMVar balance6 newnumber
+
+                number <- takeMVar balance6 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance6 newnumber
+
+                number2 <- takeMVar balance7 -- **** then take the random number (in this case 5 + 1 = 6) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance7 newnumber2 
         ---------------------------------- withdrawls for C7.  
         else if r2 == 6 then do -- random index here is 6, so this = balance7 getting the transfer, which is C7.
             number <- takeMVar balance7
@@ -388,6 +436,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance7
                 let newnumber = number - r1
                 putMVar balance7 newnumber
+
+                number <- takeMVar balance7 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance7 newnumber
+
+                number2 <- takeMVar balance8 -- **** then take the random number (in this case 6 + 1 = 7) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance8 newnumber2 
         ---------------------------------- withdrawls for C8.
         else if r2 == 7 then do -- random index here is 7, so this = balance8 getting the transfer, which is C8.
             number <- takeMVar balance8
@@ -434,6 +490,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance8
                 let newnumber = number - r1
                 putMVar balance8 newnumber
+
+                number <- takeMVar balance8 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance8 newnumber
+
+                number2 <- takeMVar balance9 -- **** then take the random number (in this case 7 + 1 = 8) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance9 newnumber2
         ---------------------------------- withdrawls for C9.
         else if r2 == 8 then do -- random index here is 8, so this = balance9 getting the transfer, which is C9.
             number <- takeMVar balance9
@@ -480,6 +544,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance9
                 let newnumber = number - r1
                 putMVar balance9 newnumber
+
+                number <- takeMVar balance9 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance9 newnumber
+
+                number2 <- takeMVar balance10 -- **** then take the random number (in this case 8 + 1 = 9) to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance10 newnumber2
          ---------------------------------- withdrawls for C10.
           else do -- random index here that the 'else do' catches is 9, so this = balance10 getting the transfer, which is C10.
             number <- takeMVar balance10
@@ -526,6 +598,14 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
                 number <- takeMVar balance10
                 let newnumber = number - r1
                 putMVar balance10 newnumber
+
+                number <- takeMVar balance10 -- then, take it away from its account
+                let newnumber = number - r1
+                putMVar balance10 newnumber
+
+                number2 <- takeMVar balance1 -- **** then back to 1 for fairness to transfer to instead.
+                let newnumber2 = number2 + r1
+                putMVar balance1 newnumber2
     else do    
  -- | A 'random' thread delay function which creates random timing delays between threads starting 
         randomRIO (1,50) >>= \r -> threadDelay (r * 100000)
