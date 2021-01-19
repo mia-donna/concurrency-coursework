@@ -113,7 +113,7 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
             number <- takeMVar balance2
             let newnumber = number + r1
             putMVar balance2 newnumber
-          ------------------------------   withdrawls for C2.
+      ------------------------------------   withdrawls for C2.
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
@@ -209,7 +209,7 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
             number <- takeMVar balance4
             let newnumber = number + r1
             putMVar balance4 newnumber    
-        --------------------------- withdrawls for C4.
+        --------------------------------- withdrawls for C4.
             if name == "C1" then do
                 number <- takeMVar balance1
                 let newnumber = number - r1
