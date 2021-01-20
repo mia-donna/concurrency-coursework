@@ -59,7 +59,7 @@ process name customer mvar value customerlist balance1 balance2 balance3 balance
         putMVar customerlist customer
         r1 <- randomAmount
         r2 <- randomCustIndex
-        putStrLn $ name ++ " -- got " ++ (show r2) ++ "-- and random amount is -- " ++ (show r1)
+        putStrLn $ name ++ " -- got " ++ (show r2) ++ "-- and random transfer amount is -- " ++ (show r1)
         putMVar value r2
         if r2 == 0 then do -- random index here is 0, so this = balance1 getting the transfer, which is C1.
             number <- takeMVar balance1
